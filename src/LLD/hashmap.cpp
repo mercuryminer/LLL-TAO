@@ -191,7 +191,7 @@ namespace LLD
     void BinaryHashMap::Initialize()
     {
         /* Keep track of total hashmaps. */
-        uint32_t nTotalHashmaps = 0;
+        uint32_t nTotalHashmaps = 0, nTotalKeys = 0;
 
         /* Create directories if they don't exist yet. */
         if(!filesystem::exists(strBaseLocation) && filesystem::create_directories(strBaseLocation))
@@ -211,7 +211,7 @@ namespace LLD
             bloom.close();
 
             /* Debug output showing generating of the hashmap file. */
-            debug::log(0, FUNCTION, "Generated Bloom Filter 0 of ", vHashmaps[0].first.Size() + vHashmaps[0].second.Size(), " bytes");
+            debug::log(0, FUNCTION, "Generated Disk Indexes of ", vHashmaps[0].first.Size() + vHashmaps[0].second.Size(), " bytes");
         }
 
         /* Read the hashmap indexes. */
@@ -244,10 +244,13 @@ namespace LLD
                 pstream->seekg(0, std::ios::beg);
                 pstream->read((char*)vHashmaps[nTotalHashmaps].first.Bytes(),   vHashmaps[nTotalHashmaps].first.Size());
                 pstream->read((char*)vHashmaps[nTotalHashmaps].second.Bytes(), vHashmaps[nTotalHashmaps].second.Size());
+
+                /* Calculate the total keys. */
+                nTotalKeys += vHashmaps[nTotalHashmaps].second.Count();
             }
 
             /* Debug output showing loading of disk index. */
-            debug::log(0, FUNCTION, "Loaded Disk Indexes | ", nTotalHashmaps, " hashmaps");
+            debug::log(0, FUNCTION, "Loaded Disk Indexes | ", nTotalKeys, " keys | ", nTotalHashmaps, " hashmaps");
         }
 
         /* Build the first hashmap index file if it doesn't exist. */
@@ -581,20 +584,64 @@ namespace LLD
         LOCK(KEY_MUTEX);
 
         /* Flush the bloom filters to disk. */
-        for(auto& hashmap : vHashmaps)
+        for(uint32_t nIndex = 0; nIndex < vHashmaps.size(); ++nIndex)
         {
             /* Check if the bloom filter needs to be updated. */
-            if(hashmap.first.fModified.load())
+            if(vHashmaps[nIndex].first.fModified.load())
             {
+                /* Find the file stream for LRU cache. */
+                std::fstream *pstream;
+                if(!pBloomStreams->Get(nIndex, pstream))
+                {
+                    /* Set the new stream pointer. */
+                    std::string strFilename = debug::safe_printstr(strBaseLocation, "_bloom.", std::setfill('0'), std::setw(5), nIndex);
+                    pstream = new std::fstream(strFilename, std::ios::in | std::ios::out | std::ios::binary);
+                    if(!pstream->is_open())
+                    {
+                        delete pstream;
+                        break;
+                    }
+
+                    /* If file not found add to LRU cache. */
+                    pBloomStreams->Put(nIndex, pstream);
+                }
+
+                /* Read data into bloom filter. */
+                pstream->seekp(vHashmaps[nIndex].first.ModifiedOffset(), std::ios::beg);
+                pstream->write((char*)vHashmaps[nIndex].first.ModifiedBytes(), vHashmaps[nIndex].first.ModifiedSize());
+                pstream->flush();
+
                 /* Unset the modified state once flushed. */
-                hashmap.first.fModified.store(false);
+                vHashmaps[nIndex].first.fModified.store(false);
             }
 
             /* Check if the hashmap filter needs to be updated. */
-            if(hashmap.second.fModified.load())
+            if(vHashmaps[nIndex].second.fModified.load())
             {
+                /* Find the file stream for LRU cache. */
+                std::fstream *pstream;
+                if(!pBloomStreams->Get(nIndex, pstream))
+                {
+                    /* Set the new stream pointer. */
+                    std::string strFilename = debug::safe_printstr(strBaseLocation, "_bloom.", std::setfill('0'), std::setw(5), nIndex);
+                    pstream = new std::fstream(strFilename, std::ios::in | std::ios::out | std::ios::binary);
+                    if(!pstream->is_open())
+                    {
+                        delete pstream;
+                        break;
+                    }
+
+                    /* If file not found add to LRU cache. */
+                    pBloomStreams->Put(nIndex, pstream);
+                }
+
+                /* Read data into bloom filter. */
+                pstream->seekp(vHashmaps[nIndex].first.Size() + vHashmaps[nIndex].second.ModifiedOffset(), std::ios::beg);
+                pstream->write((char*)vHashmaps[nIndex].second.ModifiedBytes(), vHashmaps[nIndex].second.ModifiedSize());
+                pstream->flush();
+
                 /* Unset the modified state once flushed. */
-                hashmap.second.fModified.store(false);
+                vHashmaps[nIndex].second.fModified.store(false);
             }
         }
 

@@ -18,6 +18,7 @@ ________________________________________________________________________________
 #include <cstdint>
 #include <vector>
 #include <atomic>
+#include <bitset>
 
 
 /** Bit Array Class
@@ -194,6 +195,21 @@ public:
     , vRegisters     ((nElements / 64) + 1, 0)
     , fModified      (false)
     {
+    }
+
+
+    /** Count
+     *
+     *  The total number of elements set to 1 in the bit array.
+     *
+     **/
+    uint32_t Count() const
+    {
+        uint32_t nTotal = 0;
+        for(const auto& nRegister : vRegisters)
+            nTotal += __builtin_popcountl(nRegister);
+
+        return nTotal;
     }
 
 

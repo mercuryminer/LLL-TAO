@@ -67,18 +67,6 @@ namespace LLD
         virtual void Flush() = 0;
 
 
-        /** Restore
-         *
-         *  Restore an erased key from keychain.
-         *
-         *  @param[in] vKey the key to restore.
-         *
-         *  @return True if the key was restored.
-         *
-         **/
-        virtual bool Restore(const std::vector<uint8_t>& vKey) = 0;
-
-
         /** Erase
          *
          *  Erase a key from the keychain

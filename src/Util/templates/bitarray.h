@@ -17,25 +17,34 @@ ________________________________________________________________________________
 
 #include <cstdint>
 #include <vector>
+#include <atomic>
 
 
 /** Bit Array Class
  *
  *  Class to act as a container for keys.
- *  This class operateds in O(1) for insert and search
+ *  This class operates in O(1) for insert and access
  *
- *  It has an internal file handler that commits to disk when called.
+ *  It has internal modification pointers for selecting the range of modified registers.
  *
  **/
 class BitArray
 {
 protected:
 
+    /** Keep track of first register that was modified. **/
+    uint64_t nModifiedBegin;
+
+
+    /** Keep track of the last register that was modified. **/
+    uint64_t nModifiedEnd;
+
+
     /** is_set
      *
-     *  Check if a particular bit is set in the bloom filter.
+     *  Check if a particular bit is set in the Bit Array.
      *
-     *  @param[in] nIndex The bucket to check bit for.
+     *  @param[in] nIndex The index to check bit for.
      *
      *  @return true if the bit is set.
      *
@@ -48,21 +57,78 @@ protected:
 
     /** set_bit
      *
-     *  Set a bit in the bloom filter at given bucket
+     *  Set a bit in the Bit Array for a given index.
      *
-     *  @param[in] nIndex The bucket to set bit for.
+     *  @param[in] nIndex The index to set bit for.
      *
      **/
     void set_bit(const uint64_t nIndex)
     {
-        vRegisters[nIndex / 64] |= (uint64_t(1) << (nIndex % 64));
+        /* Grab the register. */
+        uint32_t nRegister = (nIndex / 64);
+        if(!fModified.load())
+        {
+            nModifiedBegin = nRegister;
+            nModifiedEnd   = nRegister + 1; //allocate one register for first modification
+
+            fModified.store(true);
+        }
+        else
+        {
+            /* If we need to get closer to the zero-index. */
+            if(nRegister < nModifiedBegin)
+                nModifiedBegin = nRegister;
+
+            /* If we need to extend the ending index. */
+            if(nRegister >= nModifiedEnd)
+                nModifiedEnd = (nRegister + 1);
+        }
+
+        vRegisters[nRegister] |= (uint64_t(1) << (nIndex % 64));
+    }
+
+
+    /** clear_bit
+     *
+     *  Clear a bit in the Bit Array for a given index.
+     *
+     *  @param[in] nIndex The index to set bit for.
+     *
+     **/
+    void clear_bit(const uint64_t nIndex)
+    {
+        /* Grab the register. */
+        uint32_t nRegister = (nIndex / 64);
+        if(!fModified.load())
+        {
+            nModifiedBegin = nRegister;
+            nModifiedEnd   = nRegister + 1; //allocate one register for first modification
+
+            fModified.store(true);
+        }
+        else
+        {
+            /* If we need to get closer to the zero-index. */
+            if(nRegister < nModifiedBegin)
+                nModifiedBegin = nRegister;
+
+            /* If we need to extend the ending index. */
+            if(nRegister >= nModifiedEnd)
+                nModifiedEnd = (nRegister + 1);
+        }
+
+        vRegisters[nRegister] &= ~(uint64_t(1) << (nIndex % 64));
     }
 
 
     /** The bitarray using 64 bit registers. **/
     std::vector<uint64_t> vRegisters;
 
+
 public:
+
+    /** Flag to track if container has been modified. **/
+    std::atomic<bool> fModified;
 
 
     /** Default Constructor. **/
@@ -71,14 +137,20 @@ public:
 
     /** Copy Constructor. **/
     BitArray(const BitArray& filter)
-    : vRegisters (filter.vRegisters)
+    : nModifiedBegin (filter.nModifiedBegin)
+    , nModifiedEnd   (filter.nModifiedEnd)
+    , vRegisters     (filter.vRegisters)
+    , fModified      (filter.fModified.load())
     {
     }
 
 
     /** Move Constructor. **/
     BitArray(BitArray&& filter)
-    : vRegisters (std::move(filter.vRegisters))
+    : nModifiedBegin (std::move(filter.nModifiedBegin))
+    , nModifiedEnd   (std::move(filter.nModifiedEnd))
+    , vRegisters     (std::move(filter.vRegisters))
+    , fModified      (filter.fModified.load())
     {
     }
 
@@ -86,7 +158,11 @@ public:
     /** Copy assignment. **/
     BitArray& operator=(const BitArray& filter)
     {
-        vRegisters = filter.vRegisters;
+        nModifiedBegin = filter.nModifiedBegin;
+        nModifiedEnd   = filter.nModifiedEnd;
+        vRegisters     = filter.vRegisters;
+
+        fModified      = filter.fModified.load();
 
         return *this;
     }
@@ -95,7 +171,11 @@ public:
     /** Move assignment. **/
     BitArray& operator=(BitArray&& filter)
     {
-        vRegisters = std::move(filter.vRegisters);
+        nModifiedBegin = std::move(filter.nModifiedBegin);
+        nModifiedEnd   = std::move(filter.nModifiedEnd);
+        vRegisters     = std::move(filter.vRegisters);
+
+        fModified      = filter.fModified.load();
 
         return *this;
     }
@@ -109,10 +189,12 @@ public:
 
     /** Create bit array with given number of elements. **/
     BitArray  (const uint64_t nElements)
-    : vRegisters ((nElements / 64) + 1, 0)
+    : nModifiedBegin (0)
+    , nModifiedEnd   (0)
+    , vRegisters     ((nElements / 64) + 1, 0)
+    , fModified      (false)
     {
     }
-
 
 
     /** Bytes
@@ -134,6 +216,39 @@ public:
     uint64_t Size() const
     {
         return vRegisters.size() * 8;
+    }
+
+
+    /** ModifiedBytes
+     *
+     *  Get the beginning modified memory location of the bit array.
+     *
+     **/
+    uint8_t* ModifiedBytes() const
+    {
+        return (uint8_t*)&vRegisters[nModifiedBegin];
+    }
+
+
+    /** ModifiedSize
+     *
+     *  Get the size (in bytes) of the modified space in the bit array.
+     *
+     **/
+    uint64_t ModifiedSize() const
+    {
+        return (nModifiedEnd - nModifiedBegin) * 8;
+    }
+
+
+    /** ModifiedOffset
+     *
+     *  Get the current starting offset (in bytes) of the modified space.
+     *
+     **/
+    uint64_t ModifiedOffset() const
+    {
+        return (nModifiedBegin * 8);
     }
 };
 

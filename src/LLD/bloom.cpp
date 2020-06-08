@@ -53,8 +53,12 @@ namespace LLD
     /* Copy assignment. */
     BloomFilter& BloomFilter::operator=(const BloomFilter& filter)
     {
-        HASHMAP_TOTAL_BUCKETS      = filter.HASHMAP_TOTAL_BUCKETS;
-        vRegisters                 = filter.vRegisters;
+        HASHMAP_TOTAL_BUCKETS       = filter.HASHMAP_TOTAL_BUCKETS;
+        nModifiedBegin              = filter.nModifiedBegin;
+        nModifiedEnd                = filter.nModifiedEnd;
+        vRegisters                  = filter.vRegisters;
+
+        fModified                   = filter.fModified.load();
 
         return *this;
     }
@@ -63,8 +67,12 @@ namespace LLD
     /* Move assignment. */
     BloomFilter& BloomFilter::operator=(BloomFilter&& filter)
     {
-        HASHMAP_TOTAL_BUCKETS      = std::move(filter.HASHMAP_TOTAL_BUCKETS);
-        vRegisters                 = std::move(filter.vRegisters);
+        HASHMAP_TOTAL_BUCKETS       = std::move(filter.HASHMAP_TOTAL_BUCKETS);
+        nModifiedBegin              = std::move(filter.nModifiedBegin);
+        nModifiedEnd                = std::move(filter.nModifiedEnd);
+        vRegisters                  = std::move(filter.vRegisters);
+
+        fModified                   = filter.fModified.load();
 
         return *this;
     }
@@ -88,9 +96,12 @@ namespace LLD
     /* Add a new key to the bloom filter. */
     void BloomFilter::Insert(const std::vector<uint8_t>& vKey)
     {
+        LOCK(MUTEX);
+
         /* Run over k hashes. */
         for(uint16_t nK = 0; nK < 3; ++nK)
         {
+            /* Set the internal bit from the bitarray. */
             uint64_t nBucket = get_bucket(vKey, nK);
             set_bit(nBucket);
         }
@@ -100,6 +111,8 @@ namespace LLD
     /* Checks if a key exists in the bloom filter. */
     bool BloomFilter::Has(const std::vector<uint8_t>& vKey) const
     {
+        LOCK(MUTEX);
+
         /* Run over k hashes. */
         for(uint16_t nK = 0; nK < 3; ++nK)
         {

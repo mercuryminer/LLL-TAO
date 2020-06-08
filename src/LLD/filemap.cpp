@@ -307,40 +307,6 @@ namespace LLD
     }
 
 
-    /*  Simple Erase for now, not efficient in Data Usage of HD but quick
-     *  to get erase function working. */
-    bool BinaryFileMap::Restore(const std::vector<uint8_t> &vKey)
-    {
-        LOCK(KEY_MUTEX);
-
-        /* Check for the Key. */
-        if(mapKeys.find(vKey) == mapKeys.end())
-            return debug::error(FUNCTION, "Key doesn't Exist");
-
-
-        /* Establish the Outgoing Stream. */
-        std::string strFilename = debug::safe_printstr(strBaseLocation, "_filemap.", std::setfill('0'), std::setw(5), mapKeys[vKey].first);
-        std::fstream ssFile(strFilename.c_str(), std::ios::in | std::ios::out | std::ios::binary);
-
-
-        /* Set to put at the right file and sector position. */
-        ssFile.seekp(mapKeys[vKey].second, std::ios::beg);
-
-
-        /* Establish the Sector State as Empty. */
-        std::vector<uint8_t> vData(STATE::READY);
-        ssFile.write((char*) &vData[0], vData.size());
-        ssFile.flush();
-
-
-        /* Remove the Sector Key from the Memory Map. */
-        mapKeys.erase(vKey);
-
-
-        return true;
-    }
-
-
     /*  Get a Record from the Database with Given Key. */
     bool BinaryFileMap::Get(const std::vector<uint8_t>& vKey, SectorKey& cKey)
     {

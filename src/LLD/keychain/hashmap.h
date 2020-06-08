@@ -19,6 +19,8 @@ ________________________________________________________________________________
 #include <LLD/cache/template_lru.h>
 #include <LLD/include/enum.h>
 
+#include <Util/templates/bitarray.h>
+
 #include <cstdint>
 #include <string>
 #include <fstream>
@@ -27,8 +29,120 @@ ________________________________________________________________________________
 
 namespace LLD
 {
+    /** The maximum number of keys for linear probing for the hashmaps. **/
+    const uint32_t HASHMAP_MAX_KEYS_LINEAR_PROBE = 16;
+
+
     //forward declaration
     class BloomFilter;
+
+
+    /** HashMapFilter class
+     *
+     *  Handles hashmap for filtering available buckets.
+     *
+     **/
+    class HashMapFilter : public BitArray
+    {
+    public:
+        /** Default Constructor. **/
+        HashMapFilter()                                    = delete;
+
+
+        /** Copy Constructor. **/
+        HashMapFilter(const HashMapFilter& filter)
+        : BitArray(filter)
+        {
+        }
+
+
+        /** Move Constructor. **/
+        HashMapFilter(HashMapFilter&& filter)
+        : BitArray(std::move(filter))
+        {
+        }
+
+
+        /** Copy assignment. **/
+        HashMapFilter& operator=(const HashMapFilter& filter)
+        {
+            nModifiedBegin = filter.nModifiedBegin;
+            nModifiedEnd   = filter.nModifiedEnd;
+            vRegisters     = filter.vRegisters;
+
+            fModified      = filter.fModified.load();
+
+            return *this;
+        }
+
+
+        /** Move assignment. **/
+        HashMapFilter& operator=(HashMapFilter&& filter)
+        {
+            nModifiedBegin = std::move(filter.nModifiedBegin);
+            nModifiedEnd   = std::move(filter.nModifiedEnd);
+            vRegisters     = std::move(filter.vRegisters);
+
+            fModified      = filter.fModified.load();
+
+            return *this;
+        }
+
+
+        /** Default Destructor. **/
+        ~HashMapFilter()
+        {
+        }
+
+
+        /** Create bit array with given number of elements. **/
+        HashMapFilter  (const uint64_t nElements)
+        : BitArray(nElements)
+        {
+        }
+
+
+        /** Has
+         *
+         *  Check if the given bucket is available.
+         *
+         *  @param[in] nBucket The bucket to check for.
+         *
+         *  @return true if the bucket is available.
+         *
+         **/
+        bool Has(const uint64_t nBucket)
+        {
+            return is_set(nBucket);
+        }
+
+
+        /** Insert
+         *
+         *  Insert key into given bucket.
+         *
+         *  @param[in] nBucket The bucket to add key for.
+         *
+         **/
+        void Insert(const uint64_t nBucket)
+        {
+            set_bit(nBucket);
+        }
+
+
+        /** Erase
+         *
+         *  Erase key from given bucket.
+         *
+         *  @param[in] nBucket The bucket to add key for.
+         *
+         **/
+        void Erase(const uint64_t nBucket)
+        {
+            clear_bit(nBucket);
+        }
+    };
+
 
 
     /** BinaryHashMap
@@ -60,14 +174,6 @@ namespace LLD
         TemplateLRU<uint16_t, std::fstream*>* pBloomStreams;
 
 
-        /** Keychain index stream. **/
-        std::fstream* pindex;
-
-
-        /** Total elements in hashmap for quick inserts. **/
-        std::vector<uint16_t> hashmap;
-
-
         /** The Maximum buckets allowed in the hashmap. */
         uint32_t HASHMAP_TOTAL_BUCKETS;
 
@@ -81,19 +187,15 @@ namespace LLD
 
 
         /** The keychain flags. **/
-        uint8_t nFlags;
+        uint8_t HASHMAP_FLAGS;
 
 
         /* The key level locking hashmap. */
         mutable std::vector<std::mutex> RECORD_MUTEX;
 
 
-        /** Set of BLOOM filters for each hashmap. **/
-        std::vector<BloomFilter> vBloom;
-
-
-        /** Set for current bloom filter updates. **/
-        std::set<uint32_t> setUpdated;
+        /** Set of filters for each hashmap file. **/
+        std::vector< std::pair<BloomFilter, HashMapFilter> > vHashmaps;
 
 
         /** compress_key
@@ -118,6 +220,20 @@ namespace LLD
          *
          **/
         uint32_t get_bucket(const std::vector<uint8_t>& vKey);
+
+
+        /** write_key
+         *
+         *  Writes a given key to disk from particular hashmap file and binary position.
+         *
+         *  @param[in] vData The key data that is going to be written to disk.
+         *  @param[in] nFile The file number that key is going to be written to.
+         *  @param[in] nFilePos The current binary position of key in keychain.
+         *
+         *  @return true if the operation completed successfully.
+         *
+         **/
+        bool write_key(const std::vector<uint8_t>& vData, const uint16_t nFile, const uint64_t nFilePos);
 
 
     public:
@@ -192,29 +308,16 @@ namespace LLD
         void Flush();
 
 
-        /** Restore
-         *
-         *  Restore an erased key from keychain.
-         *
-         *  @param[in] vKey the key to restore.
-         *
-         *  @return True if the key was restored.
-         *
-         **/
-        bool Restore(const std::vector<uint8_t> &vKey);
-
-
         /** Erase
          *
          *  Erase a key from the disk hashmaps.
-         *  TODO: This should be optimized further.
          *
          *  @param[in] vKey the key to erase.
          *
          *  @return True if the key was erased, false otherwise.
          *
          **/
-        bool Erase(const std::vector<uint8_t> &vKey);
+        bool Erase(const std::vector<uint8_t>& vKey);
     };
 }
 

@@ -27,12 +27,12 @@ ________________________________________________________________________________
 
 namespace LLD
 {
+    
     /** Bloom Filter Class
      *
      *  Class to act as a container for keys.
      *  This class operateds in O(1) for insert and search
      *
-     *  It has an internal file handler that commits to disk when called.
      *
      **/
     class BloomFilter : public BitArray

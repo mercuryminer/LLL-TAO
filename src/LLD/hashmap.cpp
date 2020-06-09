@@ -247,6 +247,8 @@ namespace LLD
 
                 /* Calculate the total keys. */
                 nTotalKeys += vHashmaps[nTotalHashmaps].second.Count();
+
+                debug::log(0, "Hashmap ", nTotalHashmaps, " has ", vHashmaps[nTotalHashmaps].second.Count(), " keys");
             }
 
             /* Debug output showing loading of disk index. */
@@ -449,7 +451,7 @@ namespace LLD
                     uint64_t nOffset = (nKey * HASHMAP_KEY_ALLOCATION);
 
                     /* Check if this bucket has the key or is in an empty state. */
-                    if(vBucket[nKey] == STATE::EMPTY || std::equal(vBucket.begin() + nOffset + 13, vBucket.begin() + nOffset + 13 +
+                    if(std::equal(vBucket.begin() + nOffset + 13, vBucket.begin() + nOffset + 13 +
                     vKeyCompressed.size(), vKeyCompressed.begin()))
                     {
                         /* Write the key to disk. */
@@ -463,6 +465,7 @@ namespace LLD
                                 " | Bucket: ", nBucket,
                                 " | Location: ", nFilePos,
                                 " | Offset: ", nOffset,
+                                " | Probe: ", nKey,
                                 " | File: ", i,
                                 " | Sector File: ", cKey.nSectorFile,
                                 " | Sector Size: ", cKey.nSectorSize,
@@ -710,7 +713,7 @@ namespace LLD
                 uint64_t nOffset = (nKey * HASHMAP_KEY_ALLOCATION);
 
                 /* Check if this bucket has the key or is in an empty state. */
-                if(vBucket[nKey] == STATE::EMPTY || std::equal(vBucket.begin() + nOffset + 13, vBucket.begin() + nOffset + 13 +
+                if(std::equal(vBucket.begin() + nOffset + 13, vBucket.begin() + nOffset + 13 +
                 vKeyCompressed.size(), vKeyCompressed.begin()))
                 {
                     /* Keep this in static memory so we don't have to re-initialize it over and over. */

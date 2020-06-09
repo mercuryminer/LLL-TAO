@@ -74,7 +74,7 @@ public:
     TestDB()
     : SectorDatabase("testdb"
     , LLD::FLAGS::CREATE | LLD::FLAGS::FORCE
-    , 256 * 256 * 64
+    , 1024
     , 1024 * 1024 * 8)
     {
     }
@@ -156,7 +156,8 @@ int main(int argc, char** argv)
     swTimer.start();
     for(const auto& nBucket : vKeys)
     {
-        bloom->WriteKey(nBucket, nBucket);
+        if(!bloom->WriteKey(nBucket, nBucket))
+            return debug::error(FUNCTION, "Failed to write key ", nBucket.ToString());
     }
     swTimer.stop();
 

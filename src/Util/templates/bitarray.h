@@ -207,7 +207,7 @@ public:
     {
         uint32_t nTotal = 0;
         for(const auto& nRegister : vRegisters)
-            nTotal += __builtin_popcountl(nRegister);
+            nTotal += __builtin_popcountll(nRegister);
 
         return nTotal;
     }

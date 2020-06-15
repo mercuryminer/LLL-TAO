@@ -17,9 +17,9 @@
 #
 
 #
-# We prefer Debian as a base OS.
+# We prefer Debian as a base OS. (Ubuntu 18.04 is more suitable for ssl version)
 #
-FROM debian:latest
+FROM ubuntu:18.04
 
 #
 # Get latest lispers.net release from Dropbox.
@@ -38,7 +38,7 @@ RUN apt-get update && apt-get -yq install \
 # Install Nexus dependencies.
 #
 RUN apt-get update && apt-get -yq install \
-    build-essential libdb++-dev libssl1.0-dev
+    build-essential libdb++-dev libssl-dev
 
 #
 # Install Nexus application dependencies.

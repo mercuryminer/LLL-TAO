@@ -9,7 +9,7 @@
 #
 # Default to creating a symlink.
 #
-DATA_DIR="/hostOS$HOSTOS_HOME/.Nexus_Core_Data_BETA"
+DATA_DIR="/hostOS$HOSTOS_HOME/.Nexus"
 
 #
 # If no HOSTOS_HOME env variable, then create the directory and run locally

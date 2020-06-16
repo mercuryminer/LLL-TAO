@@ -39,6 +39,7 @@ WORKDIR /LLL-TAO
 #
 # Put Nexus source-tree in docker image and build it..
 #
+RUN mkdir /nexus
 RUN mkdir /nexus/build
 COPY ./makefile.cli /nexus
 COPY ./src /nexus/src/

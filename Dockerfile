@@ -36,7 +36,7 @@ COPY ./makefile.cli /nexus
 COPY ./src /nexus/src/
 
 ENV NEXUS_DEBUG 0
-RUN cd /nexus; make -j 8 -f makefile.cli ENABLE_DEBUG=$NEXUS_DEBUG
+RUN cd /nexus; make -j 2 -f makefile.cli ENABLE_DEBUG=$NEXUS_DEBUG
 
 #
 # Copy Nexus startup files.
@@ -46,11 +46,14 @@ COPY config/nexus.conf /nexus/nexus.conf.default
 COPY config/curl-nexus /nexus/curl-nexus
 COPY config/nexus-save-data /nexus/nexus-save-data
 
-# Set the Working Directory
+# Create and Set the Working Directory and setup ports
 WORKDIR /nexus
 
-# Set volumes that are required
-VOLUME ["/.Nexus", "/nexus"]
+EXPOSE 8080
+EXPOSE 9888
+EXPOSE 9336
+EXPOSE 9325
+EXPOSE 9324
 
 #
 # Startup nexus.

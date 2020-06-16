@@ -30,7 +30,6 @@ RUN apt-get update && apt-get -yq install \
 #
 # Put user in the source code location /nexus
 #
-RUN mkdir /nexus
 EXPOSE 8080
 EXPOSE 9336
 EXPOSE 9888
@@ -58,5 +57,3 @@ COPY config/nexus-save-data /nexus/nexus-save-data
 # Startup nexus.
 #
 ENV RUN_NEXUS   /nexus/nexus
-
-    

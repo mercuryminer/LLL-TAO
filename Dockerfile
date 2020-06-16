@@ -58,6 +58,7 @@ COPY config/nexus-save-data /nexus/nexus-save-data
 #
 ENV RUN_NEXUS   /nexus/run-nexus
 
-
+CMD echo "Network coming up ..."; sleep 2; \
+    echo "Starting Nexus ..."; $RUN_NEXUS; \
 
     

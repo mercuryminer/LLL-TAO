@@ -31,7 +31,9 @@ RUN apt-get update && apt-get -yq install \
 # Put user in the /dockertemp
 #
 EXPOSE 8080
-WORKDIR /dockertemp
+EXPOSE 9336
+EXPOSE 9888
+WORKDIR /tritiumdocker
 
 #
 # Put Nexus source-tree in docker image and build it..

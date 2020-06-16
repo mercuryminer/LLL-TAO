@@ -5,7 +5,7 @@
 # Usage: nexus-save-datadir <hostOS-location>
 #
 
-DEST="/hostOS$HOSTOS_HOME/.Nexus_Core_Data_BETA"
+DEST="/hostOS$HOSTOS_HOME/.Nexus"
 if [ ! -d $DEST ] ; then
    echo "Nexus data directory $DEST does not exist"
    exit 

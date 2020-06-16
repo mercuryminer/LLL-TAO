@@ -54,7 +54,7 @@ COPY config/curl-nexus /nexus/curl-nexus
 COPY config/nexus-save-data /nexus/nexus-save-data
 
 # Set volumes that are required
-VOLUME ["/.Nexus"]
+VOLUME ["/.Nexus", "/nexus"]
 
 #
 # Startup nexus.

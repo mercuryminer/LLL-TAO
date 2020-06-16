@@ -55,11 +55,12 @@ EXPOSE 9336
 EXPOSE 9325
 EXPOSE 9324
 
-VOLUME /nexus
 VOLUME /.Nexus
+
+ENV DATA_DIR=/.Nexus
 
 #
 # Startup nexus.
 #
-ENV RUN_NEXUS   /nexus/run-nexus
+ENV RUN_NEXUS   /nexus/nexus
 CMD echo "Starting Nexus ..."; $RUN_NEXUS; \

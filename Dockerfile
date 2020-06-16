@@ -22,29 +22,16 @@
 FROM ubuntu:18.04
 
 #
-# Get latest lispers.net release from Dropbox.
-#
-ENV LISP_URL https://www.dropbox.com/s/e87heamhl9t5asz/lisp-nexus.tgz
-
-#
-# Install tools we need for a networking geek.
-#
-RUN apt-get update && apt-get -yq install \
-    gcc libc-dev python python-dev libffi-dev openssl libpcap-dev \
-    curl wget iptables iproute2 tcpdump tcsh sudo traceroute iputils-ping \
-    net-tools procps emacs jq
-
-#
 # Install Nexus dependencies.
 #
 RUN apt-get update && apt-get -yq install \
     git build-essential libboost-all-dev libssl-dev libminiupnpc-dev p7zip-full libdb-dev libdb++-dev
 
 #
-# Put user in the /LLL-TAO
+# Put user in the /nexus
 #
 EXPOSE 8080
-WORKDIR /LLL-TAO
+WORKDIR /nexus
 
 #
 # Put Nexus source-tree in docker image and build it..
@@ -69,9 +56,7 @@ COPY config/nexus-save-data /nexus/nexus-save-data
 # Startup nexus.
 #
 ENV RUN_NEXUS   /nexus/run-nexus
-ENV RUN_GETINFO /nexus/nexus getinfo
 
-CMD echo "Network coming up ..."; sleep 2; \
-    echo "Starting Nexus ..."; $RUN_NEXUS; \
-#   sleep 1; $RUN_GETINFO; tcsh
+
+
     

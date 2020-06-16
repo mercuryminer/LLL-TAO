@@ -62,3 +62,5 @@ VOLUME ["/.Nexus", "/nexus"]
 ENV RUN_NEXUS   /nexus/nexus
 
 WORKDIR /nexus
+
+CMD echo "Starting Nexus ..."

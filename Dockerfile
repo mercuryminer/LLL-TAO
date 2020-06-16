@@ -25,7 +25,7 @@ FROM ubuntu:18.04
 # Install Nexus dependencies.
 #
 RUN apt-get update && apt-get -yq install \
-    git build-essential libboost-all-dev libssl-dev libminiupnpc-dev p7zip-full libdb-dev libdb++-dev
+    git build-essential libboost-all-dev libssl-dev libminiupnpc-dev p7zip-full libdb-dev libdb++-dev nano sudo
 
 #
 # Put Nexus source-tree in docker image and build it..
@@ -36,17 +36,17 @@ COPY ./makefile.cli /nexus
 COPY ./src /nexus/src/
 
 ENV NEXUS_DEBUG 0
-RUN cd /nexus; make -j 2 -f makefile.cli ENABLE_DEBUG=$NEXUS_DEBUG
+RUN cd /nexus; make -j 8 -f makefile.cli ENABLE_DEBUG=$NEXUS_DEBUG
 
 #
 # Copy Nexus startup files.
 #
-#COPY config/run-nexus /nexus/run-nexus (disabled)
+COPY config/run-nexus /nexus/run-nexus
 COPY config/nexus.conf /nexus/nexus.conf.default
 COPY config/curl-nexus /nexus/curl-nexus
 COPY config/nexus-save-data /nexus/nexus-save-data
 
-# Create and Set the Working Directory and setup ports
+# Setup container working environment
 WORKDIR /nexus
 
 EXPOSE 8080
@@ -55,8 +55,11 @@ EXPOSE 9336
 EXPOSE 9325
 EXPOSE 9324
 
+VOLUME /nexus
+VOLUME /.Nexus
+
 #
 # Startup nexus.
 #
-ENV RUN_NEXUS   /nexus/nexus
+ENV RUN_NEXUS   /nexus/run-nexus
 CMD echo "Starting Nexus ..."; $RUN_NEXUS; \

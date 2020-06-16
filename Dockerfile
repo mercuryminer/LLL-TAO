@@ -28,12 +28,13 @@ RUN apt-get update && apt-get -yq install \
     git build-essential libboost-all-dev libssl-dev libminiupnpc-dev p7zip-full libdb-dev libdb++-dev
 
 #
-# Put user in the /nexus
+# Put user in the /LLL-TAO
 #
+RUN mkdir /LLL-TAO
 EXPOSE 8080
 EXPOSE 9336
 EXPOSE 9888
-WORKDIR /nexus
+WORKDIR /LLL-TAO
 
 #
 # Put Nexus source-tree in docker image and build it..

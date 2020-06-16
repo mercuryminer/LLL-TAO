@@ -28,13 +28,6 @@ RUN apt-get update && apt-get -yq install \
     git build-essential libboost-all-dev libssl-dev libminiupnpc-dev p7zip-full libdb-dev libdb++-dev
 
 #
-# Set ports
-#
-EXPOSE 8080
-EXPOSE 9336
-EXPOSE 9888
-
-#
 # Put Nexus source-tree in docker image and build it..
 #
 RUN mkdir /nexus
@@ -48,10 +41,13 @@ RUN cd /nexus; make -j 8 -f makefile.cli ENABLE_DEBUG=$NEXUS_DEBUG
 #
 # Copy Nexus startup files.
 #
-COPY config/run-nexus /nexus/run-nexus
+#COPY config/run-nexus /nexus/run-nexus (disabled)
 COPY config/nexus.conf /nexus/nexus.conf.default
 COPY config/curl-nexus /nexus/curl-nexus
 COPY config/nexus-save-data /nexus/nexus-save-data
+
+# Set the Working Directory
+WORKDIR /nexus
 
 # Set volumes that are required
 VOLUME ["/.Nexus", "/nexus"]
@@ -60,7 +56,4 @@ VOLUME ["/.Nexus", "/nexus"]
 # Startup nexus.
 #
 ENV RUN_NEXUS   /nexus/nexus
-
-WORKDIR /nexus
-
-CMD echo "Starting Nexus ..."
+CMD echo "Starting Nexus ..."; $RUN_NEXUS; \

@@ -38,30 +38,13 @@ RUN apt-get update && apt-get -yq install \
 # Install Nexus dependencies.
 #
 RUN apt-get update && apt-get -yq install \
-    build-essential libdb++-dev libssl-dev
+    git build-essential libboost-all-dev libssl-dev libminiupnpc-dev p7zip-full libdb-dev libdb++-dev
 
 #
-# Install Nexus application dependencies.
-#
-RUN apt-get update && apt-get -yq install \
-    python-qrtools
-
-#
-# Install LISP release in /lispers.net directory.
-#
-RUN mkdir /lispers.net; cd /lispers.net; curl --insecure -L $LISP_URL | gzip -dc | tar -xf -
-
-#
-# Install python modules the lispers.net directory depends on.
-#
-RUN python /lispers.net/get-pip.py
-RUN pip install -r /lispers.net/pip-requirements.txt
-
-#
-# Put user in the /lispers.net directory when you attach to container.
+# Put user in the /LLL-TAO
 #
 EXPOSE 8080
-WORKDIR /lispers.net
+WORKDIR /LLL-TAO
 
 #
 # Put Nexus source-tree in docker image and build it..
@@ -81,33 +64,14 @@ COPY config/run-nexus /nexus/run-nexus
 COPY config/nexus.conf /nexus/nexus.conf.default
 COPY config/curl-nexus /nexus/curl-nexus
 COPY config/nexus-save-data /nexus/nexus-save-data
-COPY lisp/whoarepeers.py /nexus/whoarepeers.py
 
 #
-# Copy LISP startup config.
+# Startup nexus.
 #
-COPY lisp/RL /lispers.net/RL
-COPY lisp/provision-lisp.py /lispers.net/provision-lisp.py
-COPY lisp/lisp.config.xtr /lispers.net/lisp.config.xtr
-COPY lisp/lisp-join.py /lispers.net/lisp-join.py
-COPY lisp/make-crypto-eid.py /lispers.net/make-crypto-eid.py
-
-#
-# Add some useful tcsh alias commands.
-#
-COPY config/.aliases /root/.aliases
-COPY config/.cshrc /root/.cshrc
-
-#
-# Startup lispers.net and nexus. Output some useful data and drop into tcsh.
-#
-ENV RUN_LISP    /lispers.net/RL
 ENV RUN_NEXUS   /nexus/run-nexus
 ENV RUN_GETINFO /nexus/nexus getinfo
-ENV RUN_PSLISP  /lispers.net/pslisp
 
-CMD echo "Starting LISP ..."; $RUN_LISP;   \
-    echo "Network coming up ..."; sleep 2; \
+CMD echo "Network coming up ..."; sleep 2; \
     echo "Starting Nexus ..."; $RUN_NEXUS; \
-#   sleep 1; $RUN_PSLISP; $RUN_GETINFO; tcsh
-    sleep 1; $RUN_PSLISP; tcsh
+#   sleep 1; $RUN_GETINFO; tcsh
+    

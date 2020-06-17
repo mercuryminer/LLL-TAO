@@ -43,7 +43,7 @@ RUN cd /nexus; make -j 8 -f makefile.cli ENABLE_DEBUG=$NEXUS_DEBUG
 # Copy Nexus startup files.
 #
 COPY config/run-nexus /nexus/run-nexus
-COPY config/nexus.conf.minimal .Nexus/nexus.conf
+COPY config/nexus.conf.minimal ~/.Nexus/nexus.conf
 COPY config/curl-nexus /nexus/curl-nexus
 COPY config/nexus-save-data /nexus/nexus-save-data
 

@@ -31,7 +31,6 @@ RUN apt-get update && apt-get -yq install \
 # Put Nexus source-tree in docker image and build it..
 #
 RUN mkdir /nexus
-RUN mkdir .Nexus
 RUN mkdir /nexus/build
 COPY ./makefile.cli /nexus
 COPY ./src /nexus/src/
@@ -46,8 +45,6 @@ COPY config/run-nexus /nexus/run-nexus
 COPY config/nexus.conf.minimal /nexus/nexus.conf
 COPY config/curl-nexus /nexus/curl-nexus
 COPY config/nexus-save-data /nexus/nexus-save-data
-RUN cd ~/.Nexus
-COPY /nexus/nexus.conf ~/.Nexus/nexus.conf
 
 # Setup container working environment
 WORKDIR /nexus
@@ -65,5 +62,5 @@ VOLUME /root/.Nexus
 #
 # Startup nexus.
 #
-ENV RUN_NEXUS /nexus/nexus
+ENV RUN_NEXUS /nexus/run-nexus
 CMD echo "Starting Nexus ..."; $RUN_NEXUS; \

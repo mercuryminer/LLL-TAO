@@ -55,10 +55,6 @@ EXPOSE 9336
 EXPOSE 9325
 EXPOSE 9324
 
-VOLUME /root/.Nexus
-
-
-
 #
 # Startup nexus.
 #

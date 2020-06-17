@@ -65,5 +65,5 @@ VOLUME /root/.Nexus
 #
 # Startup nexus.
 #
-ENV RUN_NEXUS
+ENV RUN_NEXUS /nexus/nexus
 CMD echo "Starting Nexus ..."; $RUN_NEXUS; \

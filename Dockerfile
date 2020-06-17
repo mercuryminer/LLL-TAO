@@ -59,4 +59,4 @@ EXPOSE 9324
 # Startup nexus.
 #
 ENV RUN_NEXUS /nexus/run-nexus
-CMD echo "Starting Nexus ..."; $RUN_NEXUS; \
+CMD echo "Starting Nexus ..."; $RUN_NEXUS

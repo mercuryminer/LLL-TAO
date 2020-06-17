@@ -30,7 +30,7 @@ if [ ! -d "/root/.Nexus" ]; then
     if [ ! -d $DATA_DIR ]; then
         echo -n "Create nexus data directory $DATA_DIR ... "
         mkdir $DATA_DIR
-        cp /nexus/nexus.conf.default $DATA_DIR/nexus.conf
+        cp /nexus/nexus.conf $DATA_DIR/nexus.conf
         echo "done"
     fi
     echo -n "Symlink nexus data directory /root/.Nexus -> $DATA_DIR ... "

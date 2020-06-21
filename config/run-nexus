@@ -11,4 +11,4 @@ set -x #echo on
     cp -n /nexus/nexus.conf /root/.Nexus/nexus.conf
 
 #Launch nexus
-./nexus
+./nexus &

@@ -5,10 +5,10 @@ set -x #echo on
 #Create the default .Nexus data dir in /root/.Nexus; if it does not already exist
 #
 
-  mkdir -p /root/.Nexus
+    mkdir -p /root/.Nexus
 
 #Copy the default nexus.conf to the .Nexus data dir
-  cp /nexus/nexus.conf /root/.Nexus/nexus.conf
+    cp -n /nexus/nexus.conf /root/.Nexus/nexus.conf
 
 #Launch nexus
 ./nexus

@@ -9,5 +9,6 @@ rpcpassword=password
 apiuser=username
 apipassword=password
 daemon=1
+verbose=3
 #mining=1
 #stake=1

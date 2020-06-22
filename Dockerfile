@@ -50,10 +50,6 @@ COPY config/nexus-save-data /nexus/nexus-save-data
 WORKDIR /nexus
 
 EXPOSE 8080
-EXPOSE 9888
-EXPOSE 9336
-EXPOSE 9325
-EXPOSE 9324
 
 #
 # Startup nexus.

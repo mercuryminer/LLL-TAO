@@ -10,5 +10,6 @@ set -x #echo on
 #Copy the default nexus.conf to the .Nexus data dir
     cp -n /nexus/nexus.conf /root/.Nexus/nexus.conf
 
-#Launch nexus
+#Launch nexus and watch getinfo
 ./nexus
+watch ./nexus system/get/info
